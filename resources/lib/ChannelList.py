@@ -27,14 +27,16 @@ import threading
 import time
 from xml.dom.minidom import parse, parseString
 
+# Python 2/3 compatibility
 try:
-    import httplib  # Python 2
+    import http.client as httplib
 except ImportError:
-    import http.client as httplib  # Python 3
+    import httplib
+
 import xbmc
+import xbmcvfs
 import xbmcaddon
 import xbmcgui
-import xbmcvfs
 from Channel import Channel
 from FileAccess import FileAccess, FileLock
 from GlobalRulesHandler import GlobalRulesHandler
@@ -102,7 +104,7 @@ class ChannelList:
             self.updateDialogProgress = i * 100 // self.enteredChannelCount
             self.updateDialog.update(
                 self.updateDialogProgress,
-                "Loading channel " + str(i + 1) + "\n" + "waiting for file lock",
+                "Loading channel " + str(i + 1) + " - waiting for file lock",
             )
             self.channels.append(Channel())
 
@@ -125,7 +127,7 @@ class ChannelList:
                 self.updateDialogProgress = i * 100 // self.enteredChannelCount
                 self.updateDialog.update(
                     self.updateDialogProgress,
-                    "Updating channel " + str(i + 1) + "\n" + "waiting for file lock",
+                    "Updating channel " + str(i + 1) + " - waiting for file lock",
                 )
                 self.setupChannel(i + 1, False, True, False)
 
@@ -178,13 +180,10 @@ class ChannelList:
 
     def sendJSON(self, command):
         data = xbmc.executeJSONRPC(command)
-        # Python 2/3 compatibility
-        if sys.version_info[0] >= 3:
-            # In Python 3, data is already a string
-            return data
+        if isinstance(data, bytes):
+            return data.decode("utf-8", errors="ignore")
         else:
-            # In Python 2, need to decode bytes to unicode
-            return unicode(data, "utf-8", errors="ignore")
+            return data
 
     def setupChannel(self, channel, background=False, makenewlist=False, append=False):
         self.log("setupChannel " + str(channel))
@@ -266,7 +265,7 @@ class ChannelList:
                 if self.background == False:
                     self.updateDialog.update(
                         self.updateDialogProgress,
-                        "Loading channel " + str(channel) + "\n" + "reading playlist",
+                        "Loading channel " + str(channel) + " - reading playlist",
                     )
 
                 if (
@@ -344,7 +343,7 @@ class ChannelList:
                 )
                 self.updateDialog.update(
                     self.updateDialogProgress,
-                    "Updating channel " + str(channel) + "\n" + "adding videos",
+                    "Updating channel " + str(channel) + " - adding videos",
                 )
 
             if (
@@ -383,7 +382,7 @@ class ChannelList:
             self.updateDialogProgress = (channel - 1) * 100 // self.enteredChannelCount
             self.updateDialog.update(
                 self.updateDialogProgress,
-                "Loading channel " + str(channel) + "\n" + "clearing history",
+                "Loading channel " + str(channel) + " - clearing history",
             )
             self.clearPlaylistHistory(channel)
 
@@ -1019,7 +1018,7 @@ class ChannelList:
         if self.background == False:
             self.updateDialog.update(
                 self.updateDialogProgress,
-                "Updating channel " + str(self.settingChannel) + "\n" + "adding videos" + "\n" + "reading TV data",
+                "Updating channel " + str(self.settingChannel) + " - adding videos - reading TV data",
             )
 
         json_folder_detail = self.sendJSON(json_query)
@@ -1080,7 +1079,7 @@ class ChannelList:
         if self.background == False:
             self.updateDialog.update(
                 self.updateDialogProgress,
-                "Updating channel " + str(self.settingChannel) + "\n" + "adding videos" + "\n" + "reading movie data",
+                "Updating channel " + str(self.settingChannel) + " - adding videos - reading movie data",
             )
 
         json_folder_detail = self.sendJSON(json_query)
@@ -1138,7 +1137,7 @@ class ChannelList:
         if self.background == False:
             self.updateDialog.update(
                 self.updateDialogProgress,
-                "Updating channel " + str(self.settingChannel) + "\n" + "adding music" + "\n" + "reading music data",
+                "Updating channel " + str(self.settingChannel) + " - adding music - reading music data",
             )
 
         json_folder_detail = self.sendJSON(json_query)
@@ -1230,7 +1229,7 @@ class ChannelList:
         if self.background == False:
             self.updateDialog.update(
                 self.updateDialogProgress,
-                "Updating channel " + str(self.settingChannel) + "\n" + "adding items" + "\n" + "querying database",
+                "Updating channel " + str(self.settingChannel) + " - adding items - querying database",
             )
 
         json_folder_detail = self.sendJSON(json_query)
@@ -1282,12 +1281,12 @@ class ChannelList:
                                 if filecount == 1:
                                     self.updateDialog.update(
                                         self.updateDialogProgress,
-                                        "Updating channel " + str(self.settingChannel) + "\n" + "adding items" + "\n" + "added " + str(filecount) + " entry",
+                                        "Updating channel " + str(self.settingChannel) + " - adding items - added " + str(filecount) + " entry",
                                     )
                                 else:
                                     self.updateDialog.update(
                                         self.updateDialogProgress,
-                                        "Updating channel " + str(self.settingChannel) + "\n" + "adding items" + "\n" + "added " + str(filecount) + " entries",
+                                        "Updating channel " + str(self.settingChannel) + " - adding items - added " + str(filecount) + " entries",
                                     )
 
                             title = re.search('"label" *: *"(.*?)"', f)
@@ -1436,7 +1435,7 @@ class ChannelList:
                 if self.background == False:
                     self.updateDialog.update(
                         self.updateDialogProgress,
-                        "Updating channel " + str(self.settingChannel) + "\n" + "processing rule " + str(index + 1),
+                        "Updating channel " + str(self.settingChannel) + " - processing rule " + str(index + 1),
                     )
 
                 parameter = rule.runAction(action, self, parameter)
