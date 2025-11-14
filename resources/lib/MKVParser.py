@@ -19,7 +19,6 @@
 import os
 import struct
 import traceback
-import sys
 
 import xbmc
 from FileAccess import FileAccess
@@ -28,37 +27,7 @@ from Globals import ascii
 
 class MKVParser:
     def log(self, msg, level=xbmc.LOGDEBUG):
-        try:
-            xbmc.log("script.paragontv-MKVParser: " + ascii(msg), level)
-        except:
-            xbmc.log("script.paragontv-MKVParser: " + str(msg), level)
-
-    def _ensure_bytes(self, data):
-        """Convert string to bytes if needed (Python 3 compatibility) - ULTRA DEFENSIVE"""
-        if data is None:
-            return b''
-        if isinstance(data, bytes):
-            return data
-        if isinstance(data, str):
-            # Try latin1 first (preserves byte values)
-            try:
-                return data.encode('latin1')
-            except:
-                pass
-            # Try iso-8859-1 (same as latin1)
-            try:
-                return data.encode('iso-8859-1')
-            except:
-                pass
-            # Last resort - convert each character
-            try:
-                return bytes([ord(c) & 0xFF for c in data])
-            except:
-                return b''
-        # Handle bytearray
-        if isinstance(data, bytearray):
-            return bytes(data)
-        return b''
+        xbmc.log("script.paragontv-MKVParser: " + ascii(msg), level)
 
     def determineLength(self, filename):
         self.log("determineLength " + filename)
@@ -97,32 +66,24 @@ class MKVParser:
 
                 try:
                     for x in range(datasize):
-                        chunk = self.getData(1)
-                        chunk = self._ensure_bytes(chunk)
-                        if chunk and len(chunk) > 0:
-                            timecode = (timecode << 8) + struct.unpack("B", chunk)[0]
-                        else:
-                            break
-                except Exception as e:
-                    self.log("Error parsing timecode: " + str(e))
+                        timecode = (timecode << 8) + struct.unpack(
+                            "B", self.getData(1)
+                        )[0]
+                except:
                     timecode = 0
 
                 if duration != 0 and timecode != 0:
                     break
             elif data == 0x4489:
                 try:
-                    chunk = self.getData(datasize)
-                    chunk = self._ensure_bytes(chunk)
-                    if chunk and len(chunk) == datasize:
-                        if datasize == 4:
-                            duration = int(struct.unpack(">f", chunk)[0])
-                        else:
-                            duration = int(struct.unpack(">d", chunk)[0])
+                    if datasize == 4:
+                        duration = int(struct.unpack(">f", self.getData(datasize))[0])
                     else:
-                        self.log("Insufficient data for duration, got %d bytes, expected %d" % (len(chunk) if chunk else 0, datasize))
-                        duration = 0
-                except Exception as e:
-                    self.log("Error getting duration in header, size is " + str(datasize) + ": " + str(e))
+                        duration = int(struct.unpack(">d", self.getData(datasize))[0])
+                except:
+                    self.log(
+                        "Error getting duration in header, size is " + str(datasize)
+                    )
                     duration = 0
 
                 if timecode != 0 and duration != 0:
@@ -149,10 +110,11 @@ class MKVParser:
             return 0
 
         data = self.getEBMLId()
+        self.log("First EBML ID: 0x%X (expected 0x1A45DFA3)" % data if data > 0 else "First EBML ID read failed")
 
         # Check for 1A 45 DF A3
         if data != 0x1A45DFA3:
-            self.log("Not a proper MKV (got header: 0x%X)" % data if data else "Not a proper MKV (no header)")
+            self.log("Not a proper MKV - header signature mismatch")
             return 0
 
         datasize = self.getDataSize()
@@ -227,11 +189,11 @@ class MKVParser:
         return data
 
     def getDataSize(self):
+        data = self.File.read(1)
+
         try:
-            data = self.File.read(1)
-            data = self._ensure_bytes(data)
-            
             if not data or len(data) == 0:
+                self.log("getDataSize: No data read from file")
                 return 0
 
             firstbyte = struct.unpack(">B", data)[0]
@@ -247,26 +209,29 @@ class MKVParser:
 
             if firstbyte >> 7 != 1:
                 for i in range(1, 8):
-                    chunk = self.File.read(1)
-                    chunk = self._ensure_bytes(chunk)
-                    if not chunk or len(chunk) == 0:
-                        break
-                    datasize = (datasize << 8) + struct.unpack(">B", chunk)[0]
+                    nextbyte = self.File.read(1)
+                    if not nextbyte or len(nextbyte) == 0:
+                        self.log("getDataSize: No more data in loop")
+                        return 0
+
+                    datasize = (datasize << 8) + struct.unpack(">B", nextbyte)[0]
 
                     if firstbyte >> (7 - i) == 1:
                         break
         except Exception as e:
-            self.log("Error in getDataSize: " + str(e))
+            self.log("getDataSize exception: " + str(e))
+            import traceback
+            self.log(traceback.format_exc(), xbmc.LOGERROR)
             datasize = 0
 
         return datasize
 
     def getEBMLId(self):
+        data = self.File.read(1)
+
         try:
-            data = self.File.read(1)
-            data = self._ensure_bytes(data)
-            
             if not data or len(data) == 0:
+                self.log("getEBMLId: No data read from file")
                 return 0
 
             firstbyte = struct.unpack(">B", data)[0]
@@ -274,16 +239,19 @@ class MKVParser:
 
             if firstbyte >> 7 != 1:
                 for i in range(1, 4):
-                    chunk = self.File.read(1)
-                    chunk = self._ensure_bytes(chunk)
-                    if not chunk or len(chunk) == 0:
-                        break
-                    ID = (ID << 8) + struct.unpack(">B", chunk)[0]
+                    nextbyte = self.File.read(1)
+                    if not nextbyte or len(nextbyte) == 0:
+                        self.log("getEBMLId: No more data in loop")
+                        return 0
+
+                    ID = (ID << 8) + struct.unpack(">B", nextbyte)[0]
 
                     if firstbyte >> (7 - i) == 1:
                         break
         except Exception as e:
-            self.log("Error in getEBMLId: " + str(e))
+            self.log("getEBMLId exception: " + str(e))
+            import traceback
+            self.log(traceback.format_exc(), xbmc.LOGERROR)
             ID = 0
 
         return ID
