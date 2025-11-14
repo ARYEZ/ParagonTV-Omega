@@ -164,7 +164,7 @@ class Playlist:
                 index = line.find(",")
 
                 if index > 0:
-                    tmpitem.duration = int(line[8:index])
+                    tmpitem.duration = int(float(line[8:index]))
                     tmpitem.title = line[index + 1 :]
                     index = tmpitem.title.find("//")
 
