@@ -125,7 +125,7 @@
             <font>fontsize_24</font>
             <align>left</align>
             <aligny>center</aligny>
-            <textcolor>99white</textcolor>
+            <textcolor>grey</textcolor>
             <visible>StringCompare(Control.GetLabel(321),)</visible>
         </control>
         <control type="image" id="321">
@@ -168,7 +168,7 @@
             <font>fontsize_24</font>
             <align>left</align>
             <aligny>center</aligny>
-            <textcolor>99white</textcolor>
+            <textcolor>grey</textcolor>
             <visible>StringCompare(Control.GetLabel(322),)</visible>
             <description>Channel 2 Name</description>
         </control>
@@ -210,7 +210,7 @@
             <font>fontsize_24</font>
             <align>left</align>
             <aligny>center</aligny>
-            <textcolor>99white</textcolor>
+            <textcolor>grey</textcolor>
             <visible>StringCompare(Control.GetLabel(323),)</visible>
         </control>
         <control type="image" id="323">
@@ -251,7 +251,7 @@
             <font>fontsize_24</font>
             <align>left</align>
             <aligny>center</aligny>
-            <textcolor>99white</textcolor>
+            <textcolor>grey</textcolor>
             <visible>StringCompare(Control.GetLabel(324),)</visible>
         </control>
         <control type="image" id="324">
@@ -292,7 +292,7 @@
             <font>fontsize_24</font>
             <align>left</align>
             <aligny>center</aligny>
-            <textcolor>99white</textcolor>
+            <textcolor>grey</textcolor>
             <visible>StringCompare(Control.GetLabel(325),)</visible>
         </control>
         <control type="image" id="325">

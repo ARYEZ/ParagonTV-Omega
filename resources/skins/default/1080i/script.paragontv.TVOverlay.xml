@@ -121,7 +121,7 @@
                 <top>355</top>
                 <width>400</width>
                 <font>FontSize_90</font>
-                <textcolor>99white</textcolor>
+                <textcolor>grey</textcolor>
                 <shadowcolor>black</shadowcolor>
                 <align>left</align>
                 <aligny>center</aligny>
@@ -133,7 +133,7 @@
                 <top>355</top>
                 <width>200</width>
                 <font>FontSize_90</font>
-                <textcolor>99white</textcolor>
+                <textcolor>grey</textcolor>
                 <shadowcolor>black</shadowcolor>
                 <align>left</align>
                 <aligny>center</aligny>
@@ -695,7 +695,7 @@
                     <width>500</width>
                     <height>32</height>
                     <font>fontsize_22</font>
-                    <textcolor>44white</textcolor>
+                    <textcolor>grey</textcolor>
                     <align>left</align>
                     <scroll>true</scroll>
                     <label>• $INFO[Window(Home).Property(PTV.Calendar.Week.1)]</label>
@@ -721,7 +721,7 @@
                     <width>500</width>
                     <height>32</height>
                     <font>fontsize_22</font>
-                    <textcolor>44white</textcolor>
+                    <textcolor>grey</textcolor>
                     <align>left</align>
                     <scroll>true</scroll>
                     <label>• $INFO[Window(Home).Property(PTV.Calendar.Week.2)]</label>
@@ -747,7 +747,7 @@
                     <width>500</width>
                     <height>32</height>
                     <font>fontsize_22</font>
-                    <textcolor>44white</textcolor>
+                    <textcolor>grey</textcolor>
                     <align>left</align>
                     <scroll>true</scroll>
                     <label>• $INFO[Window(Home).Property(PTV.Calendar.Week.3)]</label>
@@ -773,7 +773,7 @@
                     <width>500</width>
                     <height>32</height>
                     <font>fontsize_22</font>
-                    <textcolor>44white</textcolor>
+                    <textcolor>grey</textcolor>
                     <align>left</align>
                     <scroll>true</scroll>
                     <label>• $INFO[Window(Home).Property(PTV.Calendar.Week.4)]</label>
@@ -799,7 +799,7 @@
                     <width>500</width>
                     <height>32</height>
                     <font>fontsize_22</font>
-                    <textcolor>44white</textcolor>
+                    <textcolor>grey</textcolor>
                     <align>left</align>
                     <scroll>true</scroll>
                     <label>• $INFO[Window(Home).Property(PTV.Calendar.Week.5)]</label>
@@ -825,7 +825,7 @@
                     <width>500</width>
                     <height>32</height>
                     <font>fontsize_22</font>
-                    <textcolor>44white</textcolor>
+                    <textcolor>grey</textcolor>
                     <align>left</align>
                     <scroll>true</scroll>
                     <label>• $INFO[Window(Home).Property(PTV.Calendar.Week.6)]</label>
@@ -851,7 +851,7 @@
                     <width>500</width>
                     <height>32</height>
                     <font>fontsize_22</font>
-                    <textcolor>44white</textcolor>
+                    <textcolor>grey</textcolor>
                     <align>left</align>
                     <scroll>true</scroll>
                     <label>• $INFO[Window(Home).Property(PTV.Calendar.Week.7)]</label>
@@ -877,7 +877,7 @@
                     <width>500</width>
                     <height>32</height>
                     <font>fontsize_22</font>
-                    <textcolor>44white</textcolor>
+                    <textcolor>grey</textcolor>
                     <align>left</align>
                     <scroll>true</scroll>
                     <label>• $INFO[Window(Home).Property(PTV.Calendar.Week.8)]</label>
@@ -903,7 +903,7 @@
                     <width>500</width>
                     <height>32</height>
                     <font>fontsize_22</font>
-                    <textcolor>44white</textcolor>
+                    <textcolor>grey</textcolor>
                     <align>left</align>
                     <scroll>true</scroll>
                     <label>• $INFO[Window(Home).Property(PTV.Calendar.Week.9)]</label>
@@ -929,7 +929,7 @@
                     <width>500</width>
                     <height>32</height>
                     <font>fontsize_22</font>
-                    <textcolor>44white</textcolor>
+                    <textcolor>grey</textcolor>
                     <align>left</align>
                     <scroll>true</scroll>
                     <label>• $INFO[Window(Home).Property(PTV.Calendar.Week.10)]</label>
