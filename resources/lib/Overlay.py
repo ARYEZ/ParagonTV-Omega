@@ -2316,12 +2316,31 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         # Play from saved position
         self.Player.playselected(self.preemptedPlaylistPos)
 
-        # Wait for playback to start
-        xbmc.sleep(500)
+        # Wait for playback to be ready for seeking
+        max_wait = 50  # 5 seconds maximum
+        wait_count = 0
+        while wait_count < max_wait:
+            if self.Player.isPlaying():
+                try:
+                    totalTime = self.Player.getTotalTime()
+                    if totalTime > 0:
+                        # Player is ready
+                        break
+                except:
+                    pass
+            xbmc.sleep(100)
+            wait_count += 1
+
+        if wait_count >= max_wait:
+            self.log("Playback not ready for resume seek (waited %d ms)" % (wait_count * 100), xbmc.LOGWARNING)
+        else:
+            self.log("Playback ready for resume after %d ms" % (wait_count * 100))
 
         # Seek to saved time
         if hasattr(self, "preemptedPosition"):
+            self.log("Seeking to saved position: %.2f seconds" % self.preemptedPosition)
             self.Player.seekTime(self.preemptedPosition)
+            self.log("Resume seek command sent")
 
         self.background.setVisible(False)
         self.showChannelLabel(self.currentChannel)
@@ -2839,11 +2858,14 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
         # Handle paused channels
         if self.channels[self.currentChannel - 1].isPaused:
+            self.log("Channel is paused, seeking to showTimeOffset: %.2f" %
+                     self.channels[self.currentChannel - 1].showTimeOffset)
             self.channels[self.currentChannel - 1].setPaused(False)
             try:
                 self.Player.seekTime(
                     self.channels[self.currentChannel - 1].showTimeOffset
                 )
+                self.log("Paused channel seek command sent")
                 if self.channels[self.currentChannel - 1].mode & MODE_ALWAYSPAUSE == 0:
                     self.Player.pause()
                     if self.waitForVideoPaused() == False:
@@ -2858,6 +2880,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 + int((time.time() - curtime))
             )
 
+            self.log("Channel not paused, seeking to live position")
             self.log("Seeking to position: %.2f seconds (showTimeOffset=%.2f, timedif=%.2f)" %
                      (seektime, self.channels[self.currentChannel - 1].showTimeOffset, timedif))
 
