@@ -25,20 +25,13 @@ import traceback
 import xml.etree.ElementTree as ET
 
 import xbmc
+import xbmcvfs
 import xbmcaddon
 import xbmcgui
-import xbmcvfs
 from Channel import Channel
 from FileAccess import FileAccess
 from Globals import *
 from Playlist import Playlist
-import sys
-
-# Python 2/3 compatibility
-if sys.version_info[0] >= 3:
-    unicode = str
-    basestring = str
-
 
 ADDON_SETTINGS = xbmcaddon.Addon(id="script.paragontv")
 
@@ -601,16 +594,16 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         return True
 
     def onAction(self, act):
-        self.log("onAction " + str(act.getId()))
+        action = act.getId()
+        self.log("onAction " + str(action))
 
         if self.actionSemaphore.acquire(False) == False:
             self.log("Unable to get semaphore")
             return
 
-        action = act.getId()
-
         try:
             if action in ACTION_PREVIOUS_MENU:
+                self.log("Action is PREVIOUS_MENU, closing EPG")
                 self.closeEPG()
             elif action == ACTION_MOVE_DOWN:
                 self.GoDown()
@@ -621,14 +614,21 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             elif action == ACTION_MOVE_RIGHT:
                 self.GoRight()
             elif action == ACTION_STOP:
+                self.log("Action is STOP, closing EPG")
                 self.closeEPG()
             elif action == ACTION_SELECT_ITEM:
+                self.log("Action is SELECT_ITEM (Enter key)")
                 lastaction = time.time() - self.lastActionTime
+                self.log("Time since last action: %.2f seconds" % lastaction)
 
-                if lastaction >= 2:
+                # Reduced debounce from 2 seconds to 0.3 seconds to allow quicker selection
+                if lastaction >= 0.3:
+                    self.log("Debounce passed, calling selectShow()")
                     self.selectShow()
                     self.closeEPG()
                     self.lastActionTime = time.time()
+                else:
+                    self.log("Debounce failed (%.2f < 0.3), ignoring" % lastaction)
         except:
             self.log("Unknown EPG Exception", xbmc.LOGERROR)
             self.log(traceback.format_exc(), xbmc.LOGERROR)
@@ -661,17 +661,21 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
     # Run when a show is selected, so close the epg and run the show
     def onClick(self, controlid):
-        self.log("onClick")
+        self.log("onClick controlid=" + str(controlid))
 
         if self.actionSemaphore.acquire(False) == False:
             self.log("Unable to get semaphore")
             return
 
         lastaction = time.time() - self.lastActionTime
+        self.log("onClick: Time since last action: %.2f seconds" % lastaction)
 
-        if lastaction >= 2:
+        # Reduced debounce from 2 seconds to 0.3 seconds to allow quicker selection
+        if lastaction >= 0.3:
+            self.log("onClick: Debounce passed")
             try:
                 selectedbutton = self.getControl(controlid)
+                self.log("onClick: Got control, searching for matching button")
             except:
                 self.actionSemaphore.release()
                 self.log("onClick unknown controlid " + str(controlid))
@@ -683,6 +687,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                     mycontrol = self.channelButtons[i][x]
 
                     if selectedbutton == mycontrol:
+                        self.log("onClick: Found button at row %d, index %d" % (i, x))
                         self.focusRow = i
                         self.focusIndex = x
                         self.selectShow()
@@ -692,8 +697,11 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                         self.log("onClick found button return")
                         return
 
-            self.lastActionTime = time.time()
-            self.closeEPG()
+            # Button not found in channelButtons - this is normal for non-show buttons
+            # Don't close EPG, don't update lastActionTime - let onAction handle it
+            self.log("onClick: Button NOT found in channelButtons, ignoring (let onAction handle it)")
+        else:
+            self.log("onClick: Debounce failed (%.2f < 0.3), ignoring" % lastaction)
 
         self.actionSemaphore.release()
         self.log("onClick return")
@@ -1054,8 +1062,19 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
         # Get show/movie artwork with caching
         showArtwork = self.getShowArtwork(newchan - 1, plpos)
-        if isinstance(showArtwork, unicode):
-            showArtwork = showArtwork.encode("utf-8")
+
+        # In Python 3, ensure we have a string, not bytes
+        # In Python 2, unicode strings needed to be encoded for setImage()
+        # In Python 3, setImage() expects str, not bytes
+        if sys.version_info[0] >= 3:
+            # Python 3: ensure it's a str
+            if isinstance(showArtwork, bytes):
+                showArtwork = showArtwork.decode("utf-8")
+        else:
+            # Python 2: encode unicode to bytes
+            if isinstance(showArtwork, unicode):
+                showArtwork = showArtwork.encode("utf-8")
+
         self.getControl(503).setImage(showArtwork)
 
         self.log("setShowInfo return")
