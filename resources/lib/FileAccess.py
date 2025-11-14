@@ -27,13 +27,6 @@ import time
 import Globals
 import xbmc
 import xbmcvfs
-import sys
-
-# Python 2/3 compatibility
-if sys.version_info[0] >= 3:
-    unicode = str
-    basestring = str
-
 
 VFS_AVAILABLE = True
 
@@ -163,26 +156,47 @@ class VFSFile:
     def __init__(self, filename, mode):
         Globals.log("VFSFile: trying to open " + filename)
 
-        # FIXED: Properly handle binary mode
+        # Track if we're in binary mode
+        self.binaryMode = mode in ("rb", "wb", "w")
+
         if mode == "w":
             self.currentFile = xbmcvfs.File(filename, "wb")
-        elif mode == "wb" or mode == "rb" or 'b' in mode:
-            # Binary mode - pass mode directly
-            self.currentFile = xbmcvfs.File(filename, mode)
+        elif mode == "rb":
+            self.currentFile = xbmcvfs.File(filename, "rb")
         else:
-            # Text mode
-            self.currentFile = xbmcvfs.File(filename, mode if mode else 'r')
+            self.currentFile = xbmcvfs.File(filename)
 
-        Globals.log("VFSFile: Opening " + filename, xbmc.LOGDEBUG)
+        Globals.log("VFSFile: Opening " + filename + " (binary mode: %s)" % self.binaryMode, xbmc.LOGDEBUG)
 
         if self.currentFile == None:
             Globals.log("VFSFile: Couldnt open " + filename, xbmc.LOGERROR)
 
-    def read(self, bytes):
-        return self.currentFile.read(bytes)
+    def read(self, numbytes):
+        # In Python 3 / Kodi v19+, xbmcvfs.File.read() can ONLY read textual files in UTF-8
+        # For binary files, we MUST use readBytes() which returns bytearray
+        if self.binaryMode:
+            try:
+                # Use readBytes() for binary files (returns bytearray)
+                data = self.currentFile.readBytes(numbytes)
+                # Convert bytearray to bytes (struct.unpack requires bytes, not bytearray)
+                if isinstance(data, bytearray):
+                    data = bytes(data)
+                Globals.log("VFSFile.read: Used readBytes() for binary file, got %d bytes" % len(data), xbmc.LOGDEBUG)
+                return data
+            except Exception as e:
+                Globals.log("VFSFile.read: ERROR calling readBytes(): %s" % str(e), xbmc.LOGERROR)
+                import traceback
+                Globals.log(traceback.format_exc(), xbmc.LOGERROR)
+                # Fallback to old read() method
+                Globals.log("VFSFile.read: Falling back to read() method", xbmc.LOGDEBUG)
+
+        # For text files or fallback, use regular read()
+        data = self.currentFile.read(numbytes)
+        Globals.log("VFSFile.read: Used read() method, got type=%s, length=%d" % (type(data).__name__, len(data)), xbmc.LOGDEBUG)
+        return data
 
     def write(self, data):
-        if isinstance(data, unicode):
+        if isinstance(data, str):
             data = bytearray(data, "utf-8")
             data = bytes(data)
 
@@ -224,7 +238,7 @@ class FileLock:
         self.log("close")
         self.isExiting = True
 
-        if self.refreshLocksTimer.is_alive():
+        if self.refreshLocksTimer.isAlive():
             try:
                 self.refreshLocksTimer.cancel()
                 self.refreshLocksTimer.join()
