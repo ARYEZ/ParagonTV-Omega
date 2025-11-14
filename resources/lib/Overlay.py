@@ -2814,18 +2814,28 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
         self.channels[self.currentChannel - 1].setAccessTime(curtime)
 
-        # Wait for playback to actually start before seeking
-        # Player needs time to open file, initialize decoders, and buffer
+        # Wait for playback to be ready for seeking
+        # Player needs time to open file, create demuxer, decode frames, and initialize
         max_wait = 50  # 5 seconds maximum
         wait_count = 0
-        while not self.Player.isPlaying() and wait_count < max_wait:
+
+        # Wait for player to be fully ready: playing AND has valid total time
+        while wait_count < max_wait:
+            if self.Player.isPlaying():
+                try:
+                    totalTime = self.Player.getTotalTime()
+                    if totalTime > 0:
+                        # Player is ready - file analyzed and duration known
+                        break
+                except:
+                    pass
             xbmc.sleep(100)
             wait_count += 1
 
-        if not self.Player.isPlaying():
-            self.log("Playback did not start within timeout", xbmc.LOGWARNING)
+        if wait_count >= max_wait:
+            self.log("Playback not ready within timeout (waited %d ms)" % (wait_count * 100), xbmc.LOGWARNING)
         else:
-            self.log("Playback started after %d ms, proceeding with seek" % (wait_count * 100))
+            self.log("Playback ready after %d ms, proceeding with seek" % (wait_count * 100))
 
         # Handle paused channels
         if self.channels[self.currentChannel - 1].isPaused:
