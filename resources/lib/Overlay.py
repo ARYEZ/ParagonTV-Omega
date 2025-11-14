@@ -2814,6 +2814,19 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
         self.channels[self.currentChannel - 1].setAccessTime(curtime)
 
+        # Wait for playback to actually start before seeking
+        # Player needs time to open file, initialize decoders, and buffer
+        max_wait = 50  # 5 seconds maximum
+        wait_count = 0
+        while not self.Player.isPlaying() and wait_count < max_wait:
+            xbmc.sleep(100)
+            wait_count += 1
+
+        if not self.Player.isPlaying():
+            self.log("Playback did not start within timeout", xbmc.LOGWARNING)
+        else:
+            self.log("Playback started after %d ms, proceeding with seek" % (wait_count * 100))
+
         # Handle paused channels
         if self.channels[self.currentChannel - 1].isPaused:
             self.channels[self.currentChannel - 1].setPaused(False)
@@ -2828,14 +2841,19 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             except:
                 self.log("Exception during seek on paused channel", xbmc.LOGERROR)
         else:
-            # Seek to proper time
+            # Seek to proper time (recalculate to account for wait time)
             seektime = (
                 self.channels[self.currentChannel - 1].showTimeOffset
                 + timedif
                 + int((time.time() - curtime))
             )
+
+            self.log("Seeking to position: %.2f seconds (showTimeOffset=%.2f, timedif=%.2f)" %
+                     (seektime, self.channels[self.currentChannel - 1].showTimeOffset, timedif))
+
             try:
                 self.Player.seekTime(seektime)
+                self.log("Seek command sent successfully")
             except:
                 self.log("Unable to set proper seek time, trying different value")
                 try:
@@ -2843,6 +2861,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                         self.channels[self.currentChannel - 1].showTimeOffset + timedif
                     )
                     self.Player.seekTime(seektime)
+                    self.log("Second seek attempt sent")
                 except:
                     self.log("Exception during seek", xbmc.LOGERROR)
 
