@@ -181,7 +181,7 @@ class VFSFile:
                 # Convert bytearray to bytes (struct.unpack requires bytes, not bytearray)
                 if isinstance(data, bytearray):
                     data = bytes(data)
-                Globals.log("VFSFile.read: Used readBytes() for binary file, got %d bytes" % len(data), xbmc.LOGDEBUG)
+                # Debug logging removed - causes massive log spam when reading files byte-by-byte
                 return data
             except Exception as e:
                 Globals.log("VFSFile.read: ERROR calling readBytes(): %s" % str(e), xbmc.LOGERROR)
@@ -192,7 +192,7 @@ class VFSFile:
 
         # For text files or fallback, use regular read()
         data = self.currentFile.read(numbytes)
-        Globals.log("VFSFile.read: Used read() method, got type=%s, length=%d" % (type(data).__name__, len(data)), xbmc.LOGDEBUG)
+        # Debug logging removed - causes massive log spam when reading files byte-by-byte
         return data
 
     def write(self, data):
