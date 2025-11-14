@@ -377,7 +377,7 @@
             <label>$INFO[Control.GetLabel(501)]</label>
             <font>fontsize_22</font>
             <align>left</align>
-            <textcolor>99white</textcolor>
+            <textcolor>grey</textcolor>
         </control>
         <control type="textbox" id="502">
             <description>Plot</description>
@@ -386,7 +386,7 @@
             <width>1267</width>
             <height>190</height>
             <wrapmultiline>true</wrapmultiline>
-            <textcolor>99white</textcolor>
+            <textcolor>gray</textcolor>
             <font>fontsize_18</font>
             <autoscroll time="4000" delay="6000" repeat="6000">True</autoscroll>
         </control>
