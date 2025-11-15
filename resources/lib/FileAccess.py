@@ -238,7 +238,7 @@ class FileLock:
         self.log("close")
         self.isExiting = True
 
-        if self.refreshLocksTimer.isAlive():
+        if self.refreshLocksTimer.is_alive():
             try:
                 self.refreshLocksTimer.cancel()
                 self.refreshLocksTimer.join()
