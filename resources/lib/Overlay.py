@@ -2831,7 +2831,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.channels[self.currentChannel - 1].playlistPosition
         )
 
-        self.channels[self.currentChannel - 1].setAccessTime(curtime)
+        # NOTE: Don't set accessTime here - it will be set after the seek completes
+        # to ensure accurate timeline tracking
 
         # Wait for playback to be ready for seeking
         # Player needs time to open file, create demuxer, decode frames, and initialize
@@ -2858,14 +2859,15 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
         # Handle paused channels
         if self.channels[self.currentChannel - 1].isPaused:
-            self.log("Channel is paused, seeking to showTimeOffset: %.2f" %
-                     self.channels[self.currentChannel - 1].showTimeOffset)
+            pausedSeekTime = self.channels[self.currentChannel - 1].showTimeOffset
+            self.log("Channel is paused, seeking to showTimeOffset: %.2f" % pausedSeekTime)
             self.channels[self.currentChannel - 1].setPaused(False)
             try:
-                self.Player.seekTime(
-                    self.channels[self.currentChannel - 1].showTimeOffset
-                )
+                self.Player.seekTime(pausedSeekTime)
                 self.log("Paused channel seek command sent")
+                # Update channel access time after successful seek
+                self.channels[self.currentChannel - 1].setAccessTime(time.time())
+                self.log("Updated paused channel accessTime")
                 if self.channels[self.currentChannel - 1].mode & MODE_ALWAYSPAUSE == 0:
                     self.Player.pause()
                     if self.waitForVideoPaused() == False:
@@ -2887,6 +2889,10 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             try:
                 self.Player.seekTime(seektime)
                 self.log("Seek command sent successfully")
+                # Update channel state to reflect the actual seek position
+                self.channels[self.currentChannel - 1].setShowTime(seektime)
+                self.channels[self.currentChannel - 1].setAccessTime(time.time())
+                self.log("Updated channel state: showTimeOffset=%.2f, accessTime updated" % seektime)
             except:
                 self.log("Unable to set proper seek time, trying different value")
                 try:
@@ -2895,6 +2901,10 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                     )
                     self.Player.seekTime(seektime)
                     self.log("Second seek attempt sent")
+                    # Update channel state for second attempt too
+                    self.channels[self.currentChannel - 1].setShowTime(seektime)
+                    self.channels[self.currentChannel - 1].setAccessTime(time.time())
+                    self.log("Updated channel state after retry: showTimeOffset=%.2f" % seektime)
                 except:
                     self.log("Exception during seek", xbmc.LOGERROR)
 
